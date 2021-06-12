@@ -1,0 +1,11 @@
+client/node_modules
+client/.env.development
+
+crawler-server/node_modules
+crawler-server/config
+
+server/node_modules
+server/config
+
+worker/node_modules
+worker/config
