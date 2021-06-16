@@ -155,12 +155,9 @@ const getDataFromWorker = async (key) => {
 
 const handleDepth = async (links) => {
     try {
-        if (currentDepth === 0) {
-            await insertLinksToSqsQueue("0", links);
-            currentDepth++;
-        } else {
-            await getNextDepth(queueUrl);
-        }
+        if (currentDepth === 0) await insertLinksToSqsQueue("0", links);
+        else await getNextDepth(queueUrl);
+        currentDepth++;
         console.log("current Depth", currentDepth);
 
         while (pagesLeftInSqs > 0) {
@@ -171,10 +168,8 @@ const handleDepth = async (links) => {
 
         isDepthDone = false;
 
-        if (currentDepth <= maxDepth && !isDepthDone) {
-            await handleDepth();
-            currentDepth++;
-        } else isCralwerDone = true;
+        if (currentDepth <= maxDepth && !isDepthDone) await handleDepth();
+        else isCralwerDone = true;
     } catch (err) {
         console.log(err);
     }
