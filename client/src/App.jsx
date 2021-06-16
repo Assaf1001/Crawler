@@ -1,29 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import validator from "validator";
 import ResultPage from "./ResultPage";
-import { crawlerSearch } from "./server/crawler";
-import { getPages, initRedisDB } from "./server/redis";
+import { crawlerSearch, isCrawlerDone } from "./server/crawler";
+import { getTree } from "./server/redis";
 
 const App = () => {
-    const [results, setResults] = useState([]);
+    const [tree, setTree] = useState({});
 
-    // useEffect(() => {
-    //     initRedisDB()
-    //         .then((res) => console.log(res))
-    //         .catch((err) => console.log(err));
-    // }, []);
-
-    // useEffect(() => {
-    //     setInterval(() => {
-    //         getPages()
-    //             .then((res) => {
-    //                 if (res.length !== results.length) setResults(res);
-    //             })
-    //             .catch((err) => console.log(err));
-    //     }, 1000);
-    // }, [results.length]);
-
-    const onSubmitForm = (event) => {
+    const onSubmitForm = async (event) => {
         event.preventDefault();
 
         const searchObj = {
@@ -37,12 +21,21 @@ const App = () => {
             searchObj.maxDepth > 0 &&
             searchObj.maxTotalPages > 0
         ) {
-            crawlerSearch(searchObj)
-                .then((res) => console.log(res))
-                .catch((err) => console.log(err));
+            const res = await crawlerSearch(searchObj);
+            console.log(res);
+            getResutls();
         } else {
             alert("Please enter valid values");
         }
+    };
+
+    const getResutls = () => {
+        const interval = setInterval(async () => {
+            const treeData = await getTree();
+            setTree(treeData);
+            const isDone = await isCrawlerDone();
+            if (isDone) clearInterval(interval);
+        }, 5000);
     };
 
     return (
@@ -58,10 +51,12 @@ const App = () => {
             </form>
             <div>
                 <h2>Results:</h2>
-                {results.length > 0 &&
+                {console.log(tree)}
+
+                {/* {results.length > 0 &&
                     results.map((page, i) => (
                         <ResultPage key={i} page={page} />
-                    ))}
+                    ))} */}
             </div>
         </div>
     );

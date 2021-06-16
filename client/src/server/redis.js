@@ -1,20 +1,10 @@
 import Axios from "axios";
 
-const serverAddress = process.env.REACT_APP_SERVER_ADDRESS;
+const crawlerServerAddress = process.env.REACT_APP_CRAWLER_SERVER_ADDRESS;
 
-export const initRedisDB = async () => {
+export const getTree = async () => {
     try {
-        const res = await Axios.post(`${serverAddress}/init`);
-
-        return res.data;
-    } catch (err) {
-        throw new Error(err.response.data);
-    }
-};
-
-export const getPages = async () => {
-    try {
-        const res = await Axios.get(`${serverAddress}/getPages`);
+        const res = await Axios.get(`${crawlerServerAddress}/get-tree`);
 
         return res.data;
     } catch (err) {

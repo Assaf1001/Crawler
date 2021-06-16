@@ -8,19 +8,16 @@ const workers = [
     { address: process.env.WORKER_ADDRESS_2, avaliable: true },
     { address: process.env.WORKER_ADDRESS_3, avaliable: true },
 ];
-// const workers = [
-//     process.env.WORKER_ADDRESS_1,
-//     process.env.WORKER_ADDRESS_2,
-//     process.env.WORKER_ADDRESS_3,
-// ];
 
 let queueUrl;
 let tree;
+
 let maxTotalPages,
     maxDepth,
     pagesCounter,
     currentDepth = 0,
-    pagesLeftInSqs = 0;
+    pagesLeftInSqs = 0,
+    currentWorker = 0;
 
 let isDepthDone;
 let isCralwerDone;
@@ -73,69 +70,21 @@ const scrapeFirstPage = async (url) => {
     }
 };
 
-// const scrapePagesFromWorkers = async (queueUrl) => {
-//     try {
-//         await Axios.all([
-//             Axios.post(`${workers[0]}/scrape-page`, {
-//                 queueUrl,
-//                 depth: currentDepth,
-//             }),
-//             Axios.post(`${workers[1]}/scrape-page`, {
-//                 queueUrl,
-//                 depth: currentDepth,
-//             }),
-//             Axios.post(`${workers[2]}/scrape-page`, {
-//                 queueUrl,
-//                 depth: currentDepth,
-//             }),
-//         ]).then((res) => {
-//             console.log(res);
-//             pagesLeftInSqs -= 3;
-//             console.log(pagesLeftInSqs);
-//         });
-//     } catch (err) {
-//         throw new Error(err);
-//     }
-// };
-
-let num = 0;
-
 const scrapePagesFromWorkers = async () => {
     try {
-        await Axios.post(`${workers[num].address}/scrape-page`, {
+        await Axios.post(`${workers[currentWorker].address}/scrape-page`, {
             queueUrl,
             depth: currentDepth,
         }).then((res) => {
-            console.log(workers[num].address);
-            num++;
-            if (num === 3) num = 0;
+            currentWorker++;
+            pagesLeftInSqs--;
+            if (currentWorker === 3) currentWorker = 0;
         });
         return;
     } catch (err) {
-        // throw new Error("Failed to scrape pages");
-        console.log(err);
+        console.log("Failed to scrape pages", err);
     }
 };
-// const scrapePagesFromWorkers = async () => {
-//     try {
-//         for (let worker of workers) {
-//             if (worker.avaliable) {
-//                 worker.avaliable = false;
-//                 await Axios.post(`${worker.address}/scrape-page`, {
-//                     queueUrl,
-//                     depth: currentDepth,
-//                 }).then((res) => {
-//                     console.log(worker.address);
-//                     worker.avaliable = true;
-//                 });
-//                 return;
-//             }
-//         }
-//     } catch (err) {
-//         // throw new Error("Failed to scrape pages");
-//         console.log(err);
-//     }
-// };
 
 const insertLinksToSqsQueue = async (title, links) => {
     try {
@@ -158,8 +107,7 @@ const insertLinksToSqsQueue = async (title, links) => {
         }
         console.log(`Total pages inserted to sqs:`, pagesLeftInSqs);
     } catch (err) {
-        // throw new Error("Faild to insert links to sqs");
-        console.log(err);
+        console.log("Faild to insert links to sqs", err);
     }
 };
 
@@ -191,17 +139,16 @@ const getPageFromRedis = async (key) => {
 const getDataFromWorker = async (key) => {
     console.log("data from worker", key);
     try {
-        if (isCralwerDone && pagesLeftInSqs <= 0) return crawlerDone();
+        if (isCralwerDone && pagesLeftInSqs <= 0) return await crawlerDone();
 
         const { parentAddress, pageObj } = await getPageFromRedis(key);
         addToTree({ parentAddress, pageObj });
 
         if (!isDepthDone && pagesLeftInSqs <= 0) {
-            isDepthDone = true;
             await handleDepth(pageObj.links);
+            isDepthDone = true;
         }
     } catch (err) {
-        // throw new Error("Failed to get data from worker");
         console.log("Failed to get data from worker", err.response);
     }
 };
@@ -219,16 +166,15 @@ const handleDepth = async (links) => {
         while (pagesLeftInSqs > 0) {
             await scrapePagesFromWorkers(queueUrl);
             await Axios.post(`${crawlerServerAddress}/set-tree`, { tree });
-            pagesLeftInSqs--;
             console.log("pages left in sqs", pagesLeftInSqs);
         }
 
-        // await deleteSqsQueue(queueUrl);
-
         isDepthDone = false;
 
-        if (currentDepth <= maxDepth && !isDepthDone) handleDepth();
-        else crawlerDone();
+        if (currentDepth <= maxDepth && !isDepthDone) {
+            await handleDepth();
+            currentDepth++;
+        } else isCralwerDone = true;
     } catch (err) {
         console.log(err);
     }
@@ -245,7 +191,6 @@ const getNextDepth = async () => {
             await insertLinksToSqsQueue(node.address, node.links);
         }
     }
-    currentDepth++;
 };
 
 const crawler = async (searchObj) => {
@@ -270,13 +215,12 @@ const crawler = async (searchObj) => {
 };
 
 const crawlerDone = async () => {
-    isCralwerDone = true;
-    console.log("done");
     try {
         await deleteSqsQueue(queueUrl);
+        console.log("Crawler job is done");
         await Axios.post(`${crawlerServerAddress}/crawler-done`);
     } catch (err) {
-        throw new Error();
+        throw new Error("Crawler done error", err);
     }
 };
 

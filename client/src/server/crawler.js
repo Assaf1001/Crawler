@@ -13,3 +13,13 @@ export const crawlerSearch = async (searchObj) => {
         throw new Error(err.response.data);
     }
 };
+
+export const isCrawlerDone = async () => {
+    try {
+        const res = await Axios.post(`${serverAddress}/is-crawler-done`);
+
+        return res.data;
+    } catch (err) {
+        throw new Error(err.response.data);
+    }
+};

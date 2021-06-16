@@ -13,21 +13,11 @@ router.post("/init", async (req, res) => {
     }
 });
 
-// router.post("/set-string", async (req, res) => {
-//     try {
-//         const key = await redisClient.setAsync(req.body.key, req.body.value);
-//         console.log(key);
-
-//         res.send();
-//     } catch (err) {
-//         console.log(err);
-//     }
-// });
-
 router.post("/set-tree", async (req, res) => {
     try {
         const tree = JSON.stringify(req.body.tree);
         await redisClient.setAsync("tree", tree);
+        // await redisClient.setexAsync("tree", 4, tree);
 
         res.send("ok");
     } catch (err) {
@@ -37,10 +27,11 @@ router.post("/set-tree", async (req, res) => {
 
 router.get("/get-tree", async (req, res) => {
     try {
-        const jsonValue = await redisClient.getAsync("tree");
-        const value = JSON.parse(jsonValue);
+        const jsonTree = await redisClient.getAsync("tree");
+        const tree = JSON.parse(jsonTree);
 
-        res.send(value);
+        res.send(tree);
+        // res.send(Object.values(tree));
     } catch (err) {
         console.log(err);
     }
@@ -56,32 +47,6 @@ router.post("/get-string", async (req, res) => {
         res.send(value);
     } catch (err) {
         console.log(err);
-    }
-});
-
-// router.post("/addPageToList", async (req, res) => {
-//     try {
-//         const jsonPage = JSON.stringify(req.body.pageObj);
-//         await redisClient.rpushAsync("pages", jsonPage);
-
-//         res.send("OK");
-//     } catch (err) {
-//         res.status(500).send(err);
-//     }
-// });
-
-router.get("/getPages", async (req, res) => {
-    try {
-        const jsonPages = await redisClient.lrangeAsync("pages", 0, -1);
-
-        const pages = [];
-        for (let jsonPage of jsonPages) {
-            pages.push(JSON.parse(jsonPage));
-        }
-
-        res.send(pages);
-    } catch (err) {
-        res.status(500).send(err);
     }
 });
 
