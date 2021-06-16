@@ -1,7 +1,6 @@
 const Axios = require("axios");
 const { Tree } = require("./tree");
 
-const serverAddress = process.env.SERVER_ADDRESS;
 const crawlerServerAddress = process.env.CRAWLER_SERVER_ADDRESS;
 const workers = [
     { address: process.env.WORKER_ADDRESS_1, avaliable: true },
@@ -76,8 +75,8 @@ const scrapePagesFromWorkers = async () => {
             queueUrl,
             depth: currentDepth,
         }).then((res) => {
-            pagesLeftInSqs--;
             currentWorker++;
+            pagesLeftInSqs--;
             if (currentWorker === 3) currentWorker = 0;
         });
     } catch (err) {
@@ -162,7 +161,6 @@ const handleDepth = async (links) => {
         while (pagesLeftInSqs > 0) {
             await scrapePagesFromWorkers(queueUrl);
             await Axios.post(`${crawlerServerAddress}/set-tree`, { tree });
-            // await Axios.post(`${serverAddress}/get-data`);
             console.log("pages left in sqs", pagesLeftInSqs);
             isDepthDone = false;
         }

@@ -1,13 +1,18 @@
 import React, { useState } from "react";
 import validator from "validator";
-import ResultPage from "./ResultPage";
+import { FadeLoader } from "react-spinners";
+import Node from "./components/Node";
 import { crawlerSearch, isCrawlerDone, getTree } from "./server/crawler";
 
+// import treeEx from "./treeExample.json";
+
 const App = () => {
-    const [tree, setTree] = useState({});
+    const [tree, setTree] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     const onSubmitForm = async (event) => {
         event.preventDefault();
+        setTree([]);
 
         const searchObj = {
             startUrl: event.target.elements.startUrl.value,
@@ -20,6 +25,7 @@ const App = () => {
             searchObj.maxDepth > 0 &&
             searchObj.maxTotalPages > 0
         ) {
+            setIsLoading(true);
             const res = await crawlerSearch(searchObj);
             console.log(res);
             getResutls();
@@ -31,8 +37,10 @@ const App = () => {
     const getResutls = () => {
         const interval = setInterval(async () => {
             const treeData = await getTree();
-            console.log(treeData);
-            setTree(treeData);
+            if (treeData) {
+                setIsLoading(false);
+                setTree(Object.values(treeData));
+            }
             const isDone = await isCrawlerDone();
             if (isDone) clearInterval(interval);
         }, 5000);
@@ -51,12 +59,10 @@ const App = () => {
             </form>
             <div>
                 <h2>Results:</h2>
-                {console.log(tree)}
-
-                {/* {results.length > 0 &&
-                    results.map((page, i) => (
-                        <ResultPage key={i} page={page} />
-                    ))} */}
+                {isLoading && <FadeLoader />}
+                {tree.map((node, i) => (
+                    <Node key={i} node={node} />
+                ))}
             </div>
         </div>
     );
