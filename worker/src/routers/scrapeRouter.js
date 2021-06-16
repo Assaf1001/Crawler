@@ -31,8 +31,10 @@ router.post("/scrape-page", recieveMessage, async (req, res) => {
             console.log(pageObj.url);
         }
     } catch (err) {
-        res.status(500).send(err);
-        // console.log(err);
+        console.log(err);
+        res.send();
+
+        // res.status(500).send(err);
     }
 });
 

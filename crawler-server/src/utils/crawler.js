@@ -76,11 +76,10 @@ const scrapePagesFromWorkers = async () => {
             queueUrl,
             depth: currentDepth,
         }).then((res) => {
-            currentWorker++;
             pagesLeftInSqs--;
+            currentWorker++;
             if (currentWorker === 3) currentWorker = 0;
         });
-        return;
     } catch (err) {
         console.log("Failed to scrape pages", err);
     }
@@ -132,7 +131,8 @@ const getPageFromRedis = async (key) => {
 
         return res.data;
     } catch (err) {
-        throw new Error("Failed to get value from redis");
+        // throw new Error("Failed to get value from redis");
+        console.log("Failed to get value from redis", err);
     }
 };
 
@@ -154,6 +154,8 @@ const getDataFromWorker = async (key) => {
 };
 
 const handleDepth = async (links) => {
+    isDepthDone = false;
+
     try {
         if (currentDepth === 0) await insertLinksToSqsQueue("0", links);
         else await getNextDepth(queueUrl);
@@ -164,9 +166,8 @@ const handleDepth = async (links) => {
             await scrapePagesFromWorkers(queueUrl);
             await Axios.post(`${crawlerServerAddress}/set-tree`, { tree });
             console.log("pages left in sqs", pagesLeftInSqs);
+            isDepthDone = false;
         }
-
-        isDepthDone = false;
 
         if (currentDepth <= maxDepth && !isDepthDone) await handleDepth();
         else isCralwerDone = true;
