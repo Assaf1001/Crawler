@@ -17,7 +17,6 @@ router.post("/set-tree", async (req, res) => {
     try {
         const tree = JSON.stringify(req.body.tree);
         await redisClient.setAsync("tree", tree);
-        // await redisClient.setexAsync("tree", 4, tree);
 
         res.send("ok");
     } catch (err) {
@@ -31,7 +30,6 @@ router.get("/get-tree", async (req, res) => {
         const tree = JSON.parse(jsonTree);
 
         res.send(tree);
-        // res.send(Object.values(tree));
     } catch (err) {
         console.log(err);
     }

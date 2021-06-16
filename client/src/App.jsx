@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import validator from "validator";
 import ResultPage from "./ResultPage";
-import { crawlerSearch, isCrawlerDone } from "./server/crawler";
-import { getTree } from "./server/redis";
+import { crawlerSearch, isCrawlerDone, getTree } from "./server/crawler";
 
 const App = () => {
     const [tree, setTree] = useState({});
@@ -32,6 +31,7 @@ const App = () => {
     const getResutls = () => {
         const interval = setInterval(async () => {
             const treeData = await getTree();
+            console.log(treeData);
             setTree(treeData);
             const isDone = await isCrawlerDone();
             if (isDone) clearInterval(interval);

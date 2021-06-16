@@ -1,8 +1,8 @@
 const Axios = require("axios");
 const { Tree } = require("./tree");
 
+const serverAddress = process.env.SERVER_ADDRESS;
 const crawlerServerAddress = process.env.CRAWLER_SERVER_ADDRESS;
-
 const workers = [
     { address: process.env.WORKER_ADDRESS_1, avaliable: true },
     { address: process.env.WORKER_ADDRESS_2, avaliable: true },
@@ -113,8 +113,6 @@ const insertLinksToSqsQueue = async (title, links) => {
 const addToTree = ({ parentAddress, pageObj }) => {
     const node = tree.createNode(pageObj);
 
-    console.log("add to tree", parentAddress, node.depth);
-
     if (node.depth === 0) tree.setRoot(node);
     else if (node.depth === 1) tree.root.addChild(node);
     else {
@@ -131,7 +129,6 @@ const getPageFromRedis = async (key) => {
 
         return res.data;
     } catch (err) {
-        // throw new Error("Failed to get value from redis");
         console.log("Failed to get value from redis", err);
     }
 };
@@ -165,6 +162,7 @@ const handleDepth = async (links) => {
         while (pagesLeftInSqs > 0) {
             await scrapePagesFromWorkers(queueUrl);
             await Axios.post(`${crawlerServerAddress}/set-tree`, { tree });
+            // await Axios.post(`${serverAddress}/get-data`);
             console.log("pages left in sqs", pagesLeftInSqs);
             isDepthDone = false;
         }

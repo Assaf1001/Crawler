@@ -14,6 +14,18 @@ export const crawlerSearch = async (searchObj) => {
     }
 };
 
+export const getTree = async () => {
+    try {
+        console.log("getTree");
+        const res = await Axios.get(`${serverAddress}/get-data`);
+
+        console.log(res.data);
+        return res.data;
+    } catch (err) {
+        throw new Error(err.response.data);
+    }
+};
+
 export const isCrawlerDone = async () => {
     try {
         const res = await Axios.post(`${serverAddress}/is-crawler-done`);

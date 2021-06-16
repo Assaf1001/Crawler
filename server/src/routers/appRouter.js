@@ -21,6 +21,15 @@ router.post("/crawler-start", (req, res) => {
     }
 });
 
+router.get("/get-data", async (req, res) => {
+    try {
+        const tree = await Axios.get(`${crawlerServerAddress}/get-tree`);
+        res.send(tree.data);
+    } catch (err) {
+        res.status(500).send(err);
+    }
+});
+
 router.post("/crawler-end", async (req, res) => {
     try {
         console.log("Crawler has done");
