@@ -91,7 +91,7 @@ const insertLinksToSqsQueue = async (title, links) => {
         for (let link of links) {
             console.log(link);
             if (pagesCounter >= maxTotalPages) {
-                isCralwerDone = true;
+                // isCralwerDone = true;
                 break;
             }
 
@@ -135,15 +135,14 @@ const getPageFromRedis = async (key) => {
 const getDataFromWorker = async (key) => {
     console.log("data from worker", key);
     try {
-        if (isCralwerDone && pagesLeftInSqs <= 0) return await crawlerDone();
-
         const { parentAddress, pageObj } = await getPageFromRedis(key);
         addToTree({ parentAddress, pageObj });
 
         if (!isDepthDone && pagesLeftInSqs <= 0) {
             await handleDepth(pageObj.links);
             isDepthDone = true;
-        }
+        } else if (isCralwerDone && pagesLeftInSqs <= 0)
+            return await crawlerDone();
     } catch (err) {
         console.log("Failed to get data from worker", err.response);
     }
@@ -179,7 +178,7 @@ const getNextDepth = async () => {
         .filter((node) => node.depth === currentDepth);
 
     for (let node of nextDepthNodes) {
-        if (!isCralwerDone) {
+        if (pagesCounter <= maxTotalPages) {
             await insertLinksToSqsQueue(node.address, node.links);
         }
     }

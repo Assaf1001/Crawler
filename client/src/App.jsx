@@ -1,10 +1,8 @@
 import React, { useState } from "react";
 import validator from "validator";
 import { FadeLoader } from "react-spinners";
-import Node from "./components/Node";
 import { crawlerSearch, isCrawlerDone, getTree } from "./server/crawler";
-
-// import treeEx from "./treeExample.json";
+import Node from "./components/Node";
 
 const App = () => {
     const [tree, setTree] = useState([]);
@@ -47,19 +45,28 @@ const App = () => {
     };
 
     return (
-        <div>
+        <div className="main">
+            <h1>Web Crawler</h1>
             <form onSubmit={onSubmitForm}>
-                <label htmlFor="startUrl">Start URL</label>
-                <input type="text" id="startUrl" />
-                <label htmlFor="maxDepth">Max Depth</label>
-                <input type="number" id="maxDepth" />
-                <label htmlFor="maxTotalPages">Max Total Pages</label>
-                <input type="number" id="maxTotalPages" />
+                <div>
+                    <label htmlFor="startUrl">Start URL</label>
+                    <input type="text" id="startUrl" />
+                </div>
+                <div>
+                    <label htmlFor="maxDepth">Max Depth</label>
+                    <input type="number" id="maxDepth" />
+                </div>
+                <div>
+                    <label htmlFor="maxTotalPages">Max Total Pages</label>
+                    <input type="number" id="maxTotalPages" />
+                </div>
                 <button type="submit">Submit</button>
             </form>
-            <div>
-                <h2>Results:</h2>
-                {isLoading && <FadeLoader />}
+            <div className="results">
+                <div className="spinner">
+                    {isLoading && <FadeLoader color={"#3b6978"} size={300} />}
+                </div>
+                {tree.length > 0 && <h2>Results:</h2>}
                 {tree.map((node, i) => (
                     <Node key={i} node={node} />
                 ))}
